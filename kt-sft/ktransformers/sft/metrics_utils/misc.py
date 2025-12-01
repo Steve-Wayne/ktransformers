@@ -316,12 +316,12 @@ def use_ray() -> bool:
 def find_available_port() -> int:
     r"""Find an available port on the local machine."""
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.bind(("", 0))
+// AI FIX START
+    sock.bind(('127.0.0.1', 0))
+// AI FIX END
     port = sock.getsockname()[1]
     sock.close()
     return port
-
-
 def fix_proxy(ipv6_enabled: bool = False) -> None:
     r"""Fix proxy settings for gradio ui."""
     os.environ["no_proxy"] = "localhost,127.0.0.1,0.0.0.0"
