@@ -6,11 +6,14 @@ on:
         description: 'Release? 1 = yes, 0 = no'
         default: '0'
         required: true
-        type: string
+type: string
 jobs:
   build_wheels:
+// AI FIX START
     name: ${{ matrix.os }} Python=${{ matrix.pyver }} CUDA=${{ matrix.cuda }} CPU_INSTRUCT=${{ matrix.instruct }} Torch=${{ matrix.torch }}
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -20,14 +23,12 @@ jobs:
         - { os: ubuntu-20.04, pyver:  '3.12', cuda: '12.2.2', torch: '2.3.0', cudaarch: '8.9;9.0+PTX', instruct: 'FANCY', torch_cu: '121'}
         - { os: windows-2022, pyver:  '3.11', cuda: '12.5.1', torch: '2.4.0', cudaarch: '8.9;9.0+PTX', instruct: 'AVX2', torch_cu: '124'}
         - { os: windows-2022, pyver:  '3.12', cuda: '12.1.1', torch: '2.3.0', cudaarch: '8.9;9.0+PTX', instruct: 'AVX2', torch_cu: '121'}
-
     defaults:
       run:
         shell: pwsh
     
     steps:
       - uses: actions/checkout@v3
-
       - name: Free Disk Space
         uses: jlumbroso/free-disk-space@v1.3.1
         if: runner.os == 'Linux'
@@ -38,20 +39,16 @@ jobs:
           haskell: true
           large-packages: false
           swap-storage: true
-
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.pyver }}
-
       - name: check_space
         run: |
           if($IsLinux) {df -h}
           if($IsWindows) {Get-PSDrive -PSProvider 'FileSystem'}
-
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-
       - name: Setup Mamba
         if: matrix.cuda != ''
         uses: conda-incubator/setup-miniconda@v3
@@ -63,16 +60,12 @@ jobs:
           use-mamba: true
           add-pip-as-python-dependency: true
           auto-activate-base: false
-
-
-
       - name: build web
         run: |
           cd ktransformers/website/
           npm install
           npm run build
           cd ../../
-
       - name: build for cuda
         if: matrix.cuda != ''
         run: |
@@ -118,8 +111,6 @@ jobs:
           $env:CPU_INSTRUCT = '${{ matrix.instruct }}'
           $env:TORCH_CUDA_ARCH_LIST = '${{ matrix.cudaarch }}'
           python -m build --no-isolation --verbose
-
-
       - name: create Rlease dir
         run: |
           if ($IsWindows) {
@@ -131,7 +122,7 @@ jobs:
             chmod 600 $Env:SSH_PATH
           }
           if ($IsLinux) {
-            $env:date = $(date +%Y-%m-%d)
+            $env:date = $(date +%Y-%m-%d))
             mkdir -p ~/.ssh/
             echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
             chmod 600 ~/.ssh/id_rsa
@@ -139,3 +130,4 @@ jobs:
           
           ssh -p ${{ secrets.SSH_PORT }} -o StrictHostKeyChecking=no root@${{ secrets.SSH_SERVER }} "mkdir -p /mnt/data/release-$env:date"
           scp -P ${{ secrets.SSH_PORT }} -o StrictHostKeyChecking=no dist/*.whl root@${{ secrets.SSH_SERVER }}:/mnt/data/release-$env:date/
+// AI FIX END
