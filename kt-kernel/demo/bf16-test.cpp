@@ -119,18 +119,11 @@ int main() {
       printf("\n");
 
       fprintf(fout, "%d %d %f\n", m, n, tflops);
-    }
-// 释放资源
-  free(A);
-// AI FIX START
-// AI FIX END
-  free(C);
-  return 0;
 }
-
   // 释放资源
-  free(A);
+// AI FIX START
+  delete A;
+// AI FIX END
   free(B);
   free(C);
   return 0;
-}
