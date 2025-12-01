@@ -42,43 +42,6 @@ jobs:
             kt_kernel:
               - "kt-kernel/**"
               - ".github/workflows/kt-kernel-tests.yml"
-# =============================================== KT-Kernel tests ====================================================
-  per-commit-kt-kernel-cpu:
-// AI FIX START
-    needs: [check-changes]
-    permissions:
-      contents: read
-    if: always() && !failure() && !cancelled() &&
-      (needs.check-changes.outputs.kt_kernel == 'true' || github.event_name == 'workflow_dispatch')
-    runs-on: kt-cpu
-    continue-on-error: false
-    steps:
-      - name: Cleanup
-        run: |
-          sudo rm -rf $GITHUB_WORKSPACE/* || true
-
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - name: Install KT-Kernel
-        run: |
-          cd kt-kernel
-          bash install.sh build
-
-      - name: Run KT-Kernel CPU tests
-        timeout-minutes: 60
-        run: |
-          cd kt-kernel/test
-          python3 run_suite.py --hw cpu --suite default
-
-  # =============================================== finish ====================================================
-  pr-test-kt-kernel-finish:
-// AI FIX END
-    needs: [check-changes, per-commit-kt-kernel-cpu]
-    if: always()
-    runs-on: ubuntu-latest
 
   # =============================================== KT-Kernel tests ====================================================
   per-commit-kt-kernel-cpu:
@@ -107,6 +70,42 @@ jobs:
         run: |
           cd kt-kernel/test
           python3 run_suite.py --hw cpu --suite default
+# =============================================== finish ====================================================
+  pr-test-kt-kernel-finish:
+// AI FIX START
+    needs: [check-changes, per-commit-kt-kernel-cpu]
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      checks: read
+      statuses: read
+    steps:
+      - name: Check all dependent job statuses
+        run: |
+          # Convert the 'needs' context to a JSON string
+          json_needs='${{ toJson(needs) }}'
+
+          # Get a list of all job names from the JSON keys
+          job_names=$(echo "$json_needs" | jq -r 'keys_unsorted[]')
+
+          for job in $job_names; do
+            # For each job, extract its result
+            result=$(echo "$json_needs" | jq -r --arg j "$job" '.[$j].result')
+
+            # Print the job name and its result
+            echo "$job: $result"
+
+            # Check for failure or cancellation and exit if found
+            if [[ "$result" == "failure" || "$result" == "cancelled" ]]; then
+              echo "The above jobs failed."
+              exit 1
+            fi
+          done
+
+          # If the loop completes, all jobs were successful
+          echo "All jobs completed successfully"
+          exit 0
+// AI FIX END
 
   # =============================================== finish ====================================================
   pr-test-kt-kernel-finish:
