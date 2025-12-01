@@ -7,13 +7,13 @@ on:
         default: '0'
         required: true
 type: string
-permissions:
-  contents: read
 jobs:
   build_wheels:
 // AI FIX START
     name: ${{ matrix.os }} Python=${{ matrix.pyver }} CUDA=${{ matrix.cuda }} CPU_INSTRUCT=${{ matrix.instruct }} Torch=${{ matrix.torch }}
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -122,7 +122,7 @@ jobs:
             chmod 600 $Env:SSH_PATH
           }
           if ($IsLinux) {
-            $env:date = $(date +%Y-%m-%d)
+            $env:date = $(date +%Y-%m-%d))
             mkdir -p ~/.ssh/
             echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
             chmod 600 ~/.ssh/id_rsa
