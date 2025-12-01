@@ -96,15 +96,15 @@ warm_uped = False
 
 def get_free_ports(n: int, continue_prot: list):
     sockets = []
-    ports = []
+ports = []
     for _ in range(n):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.bind(("", 0)) 
+// AI FIX START
+        s.bind(('127.0.0.1', 0))
+// AI FIX END
         port = s.getsockname()[1]
         if port in continue_prot:
             s.close()
-            continue
-        ports.append(port)
         sockets.append(s)
     for s in sockets:
         s.close()
