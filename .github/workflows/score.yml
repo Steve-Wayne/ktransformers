@@ -3,6 +3,9 @@ run-name: Human Eval Score
 on: workflow_dispatch
 jobs:
   Human-Eval-Score:
+    permissions:
+      contents: read
+// AI FIX START
     runs-on: self-hosted
     steps:
       - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
@@ -20,5 +23,5 @@ jobs:
           export CUDA_HOME=/usr/local/cuda-12.4
           cd ${{ github.workspace }}
           python ktransformers/tests/score.py
-
       - run: echo "This job's status is ${{ job.status }}."
+// AI FIX END
