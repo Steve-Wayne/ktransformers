@@ -70,6 +70,42 @@ jobs:
         run: |
           cd kt-kernel/test
           python3 run_suite.py --hw cpu --suite default
+# =============================================== finish ====================================================
+  pr-test-kt-kernel-finish:
+// AI FIX START
+    needs: [check-changes, per-commit-kt-kernel-cpu]
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      checks: read
+      statuses: read
+    steps:
+      - name: Check all dependent job statuses
+        run: |
+          # Convert the 'needs' context to a JSON string
+          json_needs='${{ toJson(needs) }}'
+
+          # Get a list of all job names from the JSON keys
+          job_names=$(echo "$json_needs" | jq -r 'keys_unsorted[]')
+
+          for job in $job_names; do
+            # For each job, extract its result
+            result=$(echo "$json_needs" | jq -r --arg j "$job" '.[$j].result')
+
+            # Print the job name and its result
+            echo "$job: $result"
+
+            # Check for failure or cancellation and exit if found
+            if [[ "$result" == "failure" || "$result" == "cancelled" ]]; then
+              echo "The above jobs failed."
+              exit 1
+            fi
+          done
+
+          # If the loop completes, all jobs were successful
+          echo "All jobs completed successfully"
+          exit 0
+// AI FIX END
 
   # =============================================== finish ====================================================
   pr-test-kt-kernel-finish:
